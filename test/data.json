@@ -1,0 +1,11 @@
+{
+    "__doc__": "test data"
+    ,"string": "string value"
+    ,"stringarray": ["a", "b"]
+    ,"stringarray2": [["a"], [[["b"]]]]
+    ,"dict": {"a": "a value", "b": "b value", "c": ["d", {"e": 88}]}
+    ,"dict2": {"a": 1, "ab": 2, "b": 3, "bc": 4}
+    ,"unsorted": [3, 2, 1]
+    ,"sorted": [1, 2, 3]
+    ,"objects": {"a": {"b": {"c": "C value"}}}
+}

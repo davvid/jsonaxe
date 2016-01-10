@@ -1,0 +1,298 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import re
+import sys
+import types
+import json
+import operator
+from fnmatch import fnmatch
+
+try:
+    string_types = (basestring,)
+except NameError:  # python3
+    string_types = (str,)
+
+
+def error(msg, status=1):
+    sys.stderr.write('error: %s\n' % msg)
+    sys.exit(status)
+
+
+def dumps(data):
+    return json.dumps(data, indent=2, sort_keys=True)
+
+
+def is_seq(obj):
+    return isinstance(obj, (list, tuple))
+
+def load_json(filename):
+    try:
+        if filename == '-':
+            data = json.load(sys.stdin)
+        else:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+    except StandardError as e:
+        if filename == '-':
+            prefix = 'stdin: '
+        else:
+            prefix = ''
+        error('%s%s' % (prefix, e))
+
+    return data
+
+
+class View(object):
+
+    def __init__(self, data):
+        self.__data = data
+        self.__aliases = {
+                'append': self.__append__,
+                'capitalize': self.__capitalize__,
+                'delete': self.__delete__,
+                'filter': self.__filter__,
+                'fnmatch': self.__fnmatch__,
+                'format': self.__format__,
+                'insert': self.__insert__,
+                'join': self.__join__,
+                'keys': self.__keys__,
+                'lower': self.__lower__,
+                'lstrip': self.__lstrip__,
+                'map': self.__map__,
+                'match': self.__match__,
+                'partition': self.__partition__,
+                'put': self.__setitem__,
+                'remove': self.__remove__,
+                'replace': self.__replace__,
+                'reverse': self.__reverse__,
+                'rstrip': self.__rstrip__,
+                'save': self.__save__,
+                'sort': self.__sort__,
+                'split': self.__split__,
+                'strip': self.__strip__,
+                'title': self.__title__,
+                'upper': self.__upper__,
+                'values': self.__values__,
+        }
+
+    def __append__(self, value):
+        self.__data.append(value)
+        return self
+
+    def __capitalize__(self):
+        return self.__set__(self.__data.capitalize())
+
+    def __delete__(self, key):
+        self.__data.pop(key)
+        return self
+
+    def __filter__(self, fn, raw=False):
+        """Apply a filter to the data in-place
+
+        :param raw: Output raw text instead of json.  Defaults to False.
+
+        """
+        if isinstance(self.__data, dict) and not raw:
+            data = dict([(k, v) for (k, v) in self.__data.items() if fn(k)])
+        else:
+            data = [x for x in self.__data if fn(x)]
+        return self.__set__(data)
+
+    def __fnmatch__(self, pattern, raw=False):
+        """Apply an fnmatch filter"""
+        return self.__filter__(lambda x: fnmatch(x, pattern), raw=raw)
+
+    def __format__(self, fmt):
+        if isinstance(self.__data, dict):
+            data = fmt.format(**self.__data)
+        elif is_seq(self.__data):
+            data = fmt.format(*self.__data)
+        else:
+            data = fmt.format(self.__data)
+        return self.__set__(data)
+
+    def __get__(self):
+        return self.__data
+
+    def __getattr__(self, attr):
+        try:
+            return self.__set__(self.__data[attr])
+        except (KeyError, TypeError) as e:
+            try:
+                return self.__aliases[attr]
+            except KeyError:
+                raise e  # not an alias -- re-raise the original exception
+
+    def __getitem__(self, idx):
+        return self.__set__(self.__data[idx])
+
+    def __getslice__(self, start, end):
+        return self.__set__(self.__data.__getslice__(start, end))
+
+    def __insert__(self, idx, value):
+        self.__data.insert(idx, value)
+        return self
+
+    def __join__(self, value):
+        return self.__setitem__(value.join(self.__data))
+
+    def __keys__(self):
+        return self.__set__(list(sorted(self.__data.keys())))
+
+    def __lower__(self):
+        return self.__set__(self.__data.lower())
+
+    def __lstrip__(self, *args):
+        return self.__set__(self.__data.lstrip(*args))
+
+    def __map__(self, fn):
+        return self.__set__(map(fn, self.__data))
+
+    def __match__(self, pat, flags=0, raw=False):
+        """Apply a regular expression match filter"""
+        rgx = re.compile(pat, flags=flags)
+        return self.__filter__(lambda string: rgx.match(string), raw=raw)
+
+    def __partition__(self, value):
+        return self.__set__(self.__data.partition(value))
+
+    def __remove__(self, value):
+        return self.__set__(self.__data.remove(value))
+
+    def __replace__(self, search, replace):
+        return self.__set__(self.__data.replace(search, replace))
+
+    def __reverse__(self):
+        self.__data.reverse()
+        return self
+
+    def __rpartition__(self, value):
+        return self.__set__(self.__data.rpartition(value))
+
+    def __rstrip__(self, *args):
+        return self.__set__(self.__data.rstrip(*args))
+
+    def __save__(self, path):
+        with open(path, 'w') as f:
+            json.dump(self.__data, f, indent=4, sort_keys=True)
+        return self
+
+    def __nop__(self):
+        """Do nothing, the default expression"""
+        return self
+
+    def __sort__(self, cmp=None, key=None, reverse=False):
+        self.__data.sort(cmp=cmp, key=key, reverse=reverse)
+        return self
+
+    def __set__(self, value):
+        self.__data = value
+        return self
+
+    def __setitem__(self, idx, value):
+        self.__data[idx] = value
+        return self
+
+    def __split__(self, *args):
+        return self.__set__(self.__data.split(*args))
+
+    def __strip__(self, *args):
+        return self.__set__(self.__data.strip(*args))
+
+    def __title__(self, value):
+        return self.__set__(self.__data.title())
+
+    def __upper__(self):
+        return self.__set__(self.__data.upper())
+
+    def __values__(self):
+        return self.__set__(self.__data.values())
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--raw', '-r', help='output raw text',
+                        default=False, action='store_true')
+    parser.add_argument('--expand', '-x', default=False, action='store_true',
+                        help='expand environment $variables in strings')
+    parser.add_argument('query', metavar='<query>',
+                        help='query expression')
+    parser.add_argument('filename', metavar='<file>', default='-', nargs='?',
+                        help='json file, defaults to "-" (stdin)')
+    return parser.parse_args()
+
+
+class PrintResult(object):
+
+    def __init__(self, data, raw, expand):
+        self.data = data
+        self.raw = raw
+        self.expand = expand
+        self.indent = 0
+
+    def print_result(self):
+        if self.raw:
+            self.print_raw(self.data, self.expand)
+        else:
+            self.print_json()
+
+    def print_raw(self, data, expand):
+        # If the value is a list then print each element
+        prefix = '\t' * self.indent
+        if is_seq(data):
+            for j in data:
+                self.print_raw(j, expand)
+        # If the value is a string then expand it and print
+        elif isinstance(data, types.StringTypes):
+            if expand:
+                data = os.path.expandvars(data)
+            print('%s%s' % (prefix, data))
+        # Just print it
+        elif isinstance(data, dict):
+            self.indent += 1
+            for k, v in sorted(data.items(), key=operator.itemgetter(0)):
+                print('%s%s:' % (prefix, k))
+                self.print_raw(v, expand)
+            self.indent -= 1
+        else:
+            print('%s%s' % (prefix, data))
+
+    def print_json(self):
+        print(dumps(self.data))
+
+
+class Expression(object):
+
+    def __init__(self, expr, data):
+        expr = expr.lstrip('.')
+        if not expr:
+            expr = '__nop__()'
+        self.expr = expr
+        self.data = data
+
+    def evaluate(self):
+        expr = 'data.%s.__get__()' % self.expr
+        try:
+            return eval(expr, dict(data=self.data))
+        except StandardError as e:
+            error(e)
+
+
+def main():
+    args = parse_args()
+    data = load_json(args.filename)
+
+    view = View(data)
+    expression = Expression(args.query, view)
+    result = expression.evaluate()
+
+    output = PrintResult(result, args.raw, args.expand)
+    output.print_result()
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
