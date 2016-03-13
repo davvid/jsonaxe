@@ -49,6 +49,7 @@ class View(object):
     def __init__(self, data):
         self.__data = data
         self.__aliases = {
+                'add': self.__add__,
                 'append': self.__append__,
                 'capitalize': self.__capitalize__,
                 'delete': self.__delete__,
@@ -58,6 +59,7 @@ class View(object):
                 'insert': self.__insert__,
                 'join': self.__join__,
                 'keys': self.__keys__,
+                'len': self.__size__,
                 'lower': self.__lower__,
                 'lstrip': self.__lstrip__,
                 'map': self.__map__,
@@ -69,6 +71,8 @@ class View(object):
                 'reverse': self.__reverse__,
                 'rstrip': self.__rstrip__,
                 'save': self.__save__,
+                'size': self.__size__,
+                'sub': self.__sub__,
                 'sort': self.__sort__,
                 'split': self.__split__,
                 'strip': self.__strip__,
@@ -76,6 +80,9 @@ class View(object):
                 'upper': self.__upper__,
                 'values': self.__values__,
         }
+
+    def __add__(self, value):
+        return self.__set__(self.__data + value)
 
     def __append__(self, value):
         self.__data.append(value)
@@ -178,6 +185,12 @@ class View(object):
         with open(path, 'w') as f:
             json.dump(self.__data, f, indent=4, sort_keys=True)
         return self
+
+    def __size__(self):
+        return self.__set__(len(self.__data))
+
+    def __sub__(self, value):
+        return self.__set__(self.__data - value)
 
     def __nop__(self):
         """Do nothing, the default expression"""
