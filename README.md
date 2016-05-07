@@ -95,6 +95,7 @@ when jsonaxe expressions are evaluated.
     filter(<fn>): Filter data with a filter function
     fnmatch(<glob>): Filter data using an fnmatch expression
     format(<string>): Format data using a format string
+    get(<key|index>): Get the item at the specified dict key or list index
     insert(<index>, <value>): Insert <value> at <index>
     join(<string>): Combine string arrays with the specified delimeter
     keys(): Inspect the object's keys

@@ -56,6 +56,7 @@ class View(object):
                 'filter': self.__filter__,
                 'fnmatch': self.__fnmatch__,
                 'format': self.__format__,
+                'get': self.__getitem__,
                 'insert': self.__insert__,
                 'join': self.__join__,
                 'keys': self.__keys__,

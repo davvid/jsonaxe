@@ -199,4 +199,25 @@ OK
 	test_cmp expect actual
 '
 
+test_expect_success 'can get() list items' '
+    cat >expect <<\-EOF &&
+42
+-EOF
+    ./jsonaxe "get(1)" >actual <<\-EOF &&
+[24, 42, 88]
+-EOF
+    test_cmp expect actual
+'
+
+test_expect_success 'can get() dict items' '
+    cat >expect <<\-EOF &&
+42
+-EOF
+    ./jsonaxe "get(\"1\")" >actual <<\-EOF &&
+{"0": 24, "1": 42, "2": 88}
+-EOF
+    test_cmp expect actual
+'
+
+
 test_done
