@@ -10,19 +10,18 @@ jsonaxe script into a location on your $PATH.
 First, clone the Git repository:
 
     $ git clone git://github.com/davvid/jsonaxe.git
+    $ cd jsonaxe
 
 Then choose an installation method that works best for you:
 
 ### Per-user installation
 
-    $ cd jsonaxe
     $ make install
 
 This will install `$HOME/bin/jsonaxe` and `$HOME/share/doc/jsonaxe`.
 
 ### System-wide installation
 
-    $ cd sharness
     # make install prefix=/usr/local
 
 This will install `/usr/local/bin/jsonaxe` and `/usr/local/share/doc/jsonaxe`.
