@@ -219,5 +219,34 @@ test_expect_success 'can get() dict items' '
     test_cmp expect actual
 '
 
+test_expect_success 'can apply() to dict' '
+    cat >expect <<\-EOF &&
+appdirs==1.4.3
+attrs==18.1.0
+chardet
+-EOF
+    ./jsonaxe -r \
+        "default.apply( \
+            lambda x: sorted([ \
+                (k + v.get(\"version\", \"\").strip()) \
+                for (k, v) in x.items() \
+            ]) \
+        )" >actual <<\-EOF &&
+{
+    "default": {
+        "appdirs": {
+            "version": "==1.4.3"
+        },
+        "chardet": {
+        },
+        "attrs": {
+            "version": "==18.1.0"
+        }
+    }
+}
+-EOF
+    test_cmp expect actual
+'
+
 
 test_done

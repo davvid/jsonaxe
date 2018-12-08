@@ -51,6 +51,7 @@ class View(object):
         self.__aliases = {
                 'add': self.__add__,
                 'append': self.__append__,
+                'apply': self.__apply__,
                 'capitalize': self.__capitalize__,
                 'delete': self.__delete__,
                 'filter': self.__filter__,
@@ -88,6 +89,9 @@ class View(object):
     def __append__(self, value):
         self.__data.append(value)
         return self
+
+    def __apply__(self, fn):
+        return self.__set__(fn(self.__data))
 
     def __capitalize__(self):
         return self.__set__(self.__data.capitalize())
