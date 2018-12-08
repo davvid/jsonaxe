@@ -29,6 +29,6 @@ uninstall:
 doc: all
 
 test: all
-	$(MAKE) -C test
+	$(MAKE) --no-print-directory -C test
 
 .PHONY: all install uninstall doc test

@@ -29,30 +29,30 @@ T = $(sort $(wildcard *.t))
 all: $(DEFAULT_TEST_TARGET)
 
 test: pre-clean
-	$(MAKE) aggregate-results-and-cleanup
+	@$(MAKE) aggregate-results-and-cleanup
 
 prove: pre-clean
 	@echo "*** prove ***"; $(PROVE) --exec '$(SHELL_PATH_SQ)' $(PROVE_OPTS) $(T) :: $(TEST_OPTS)
-	$(MAKE) clean-except-prove-cache
+	@$(MAKE) clean-except-prove-cache
 
 $(T):
 	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' $@ $(TEST_OPTS)
 
 pre-clean:
-	$(RM) -r test-results
+	@$(RM) -r test-results
 
 clean-except-prove-cache:
-	$(RM) -r 'trash directory'.* test-results
+	@$(RM) -r 'trash directory'.* test-results
 
 clean: clean-except-prove-cache
-	$(RM) .prove
+	@$(RM) .prove
 
 aggregate-results-and-cleanup: $(T)
-	$(MAKE) aggregate-results
-	$(MAKE) clean
+	@$(MAKE) aggregate-results
+	@$(MAKE) clean
 
 aggregate-results:
-	for f in test-results/*.counts; do \
+	@for f in test-results/*.counts; do \
 		echo "$$f"; \
 	done | '$(SHELL_PATH_SQ)' '$(AGGREGATE_SCRIPT)'
 
